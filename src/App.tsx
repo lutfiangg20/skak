@@ -48,6 +48,31 @@ function App() {
 
 	useEffect(() => {
 		refetch();
+
+		const channel = supabase.current
+			.channel("public:messages")
+			.on(
+				"postgres_changes",
+				{
+					event: "*",
+					schema: "public",
+					table: "players",
+				},
+				(payload) => {
+					console.log("Payload:", payload);
+					if (
+						payload.eventType === "UPDATE" ||
+						payload.eventType === "INSERT"
+					) {
+						refetch();
+					}
+				},
+			)
+			.subscribe();
+
+		return () => {
+			supabase.current.removeChannel(channel);
+		};
 	}, []);
 
 	const handleWin = async (id: number, current: number, play: number) => {
@@ -59,7 +84,7 @@ function App() {
 			})
 			.eq("id", id);
 
-		refetch();
+		// refetch();
 	};
 
 	const handleLose = async (id: number, current: number, play: number) => {
@@ -71,7 +96,7 @@ function App() {
 			})
 			.eq("id", id);
 
-		refetch();
+		// refetch();
 	};
 
 	const handleDraw = async (id: number, current: number, play: number) => {
@@ -82,7 +107,7 @@ function App() {
 				play: play + 1,
 			})
 			.eq("id", id);
-		refetch();
+		// refetch();
 	};
 
 	const handleManual = async (id: number) => {
@@ -107,7 +132,7 @@ function App() {
 				play: formData.play,
 			})
 			.eq("id", manual);
-		refetch();
+		// refetch();
 		setManual(0);
 	};
 
