@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { Ban, Check, CircleX } from "lucide-react";
+import { Check, CircleX } from "lucide-react";
 import {
 	Table,
 	TableBody,
