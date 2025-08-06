@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
+import { Ban, Check, CircleX } from "lucide-react";
 import {
 	Table,
 	TableBody,
@@ -10,22 +11,25 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import type { Database } from "./database.types";
-import type { Player } from "./types";
+import type { EditPlayer, Player } from "./types";
 import { Button } from "./components/ui/button";
+import CustomInput from "./components/CustomInput";
 
 function App() {
-	const [players, setPlayers] = useState<Player[]>([]);
-	const [manual, setManual] = useState({
-		id: 0,
-		state: false,
-	});
-
 	const supabase = useRef(
 		createClient<Database>(
 			"https://lbycgoekpwpuvtwdyrvh.supabase.co",
 			"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxieWNnb2VrcHdwdXZ0d2R5cnZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyODMwNTAsImV4cCI6MjA2OTg1OTA1MH0.QLQm-BNkT4MNE9df_X_TwIwPpJiJNNPnDLFnPQTggns",
 		),
 	);
+	const [players, setPlayers] = useState<Player[]>([]);
+	const [manual, setManual] = useState(0);
+	const [formData, setFormData] = useState<EditPlayer>({
+		win: 0,
+		lose: 0,
+		draw: 0,
+		play: 0,
+	});
 
 	const refetch = async () => {
 		const { data } = await supabase.current.from("players").select("*");
@@ -81,9 +85,35 @@ function App() {
 		refetch();
 	};
 
+	const handleManual = async (id: number) => {
+		const find = players.find((player) => player.id === id);
+		if (!find) return;
+		setFormData({
+			win: find.win,
+			lose: find.lose,
+			draw: find.draw,
+			play: find.play,
+		});
+		setManual(id);
+	};
+
+	const handleSubmitManual = async () => {
+		await supabase.current
+			.from("players")
+			.update({
+				win: formData.win,
+				lose: formData.lose,
+				draw: formData.draw,
+				play: formData.play,
+			})
+			.eq("id", manual);
+		refetch();
+		setManual(0);
+	};
+
 	return (
 		<div className="flex h-screen items-center justify-center">
-			<div className="w-[50%] space-y-2">
+			<div className="w-fit space-y-2">
 				<h2 className="font-bold text-center uppercase">
 					brutal catur universe
 				</h2>
@@ -91,7 +121,7 @@ function App() {
 					sekak standings
 				</h1>
 				<Table className="font-bold">
-					<TableCaption>A list of your recent invoices.</TableCaption>
+					<TableCaption>A list of players</TableCaption>
 					<TableHeader className="bg-secondary">
 						<TableRow>
 							<TableHead className="w-[100px] uppercase">pos</TableHead>
@@ -110,10 +140,54 @@ function App() {
 							<TableRow key={player.id}>
 								<TableCell>{index + 1}</TableCell>
 								<TableCell className="uppercase">{player.name}</TableCell>
-								<TableCell>{player.play}</TableCell>
-								<TableCell>{player.win}</TableCell>
-								<TableCell>{player.draw}</TableCell>
-								<TableCell>{player.lose}</TableCell>
+								<TableCell>
+									<CustomInput
+										className="w-12"
+										id={player.id}
+										manual={manual}
+										manualValue={formData.play}
+										value={player.play}
+										onChange={(value) =>
+											setFormData({ ...formData, play: value })
+										}
+									/>
+								</TableCell>
+								<TableCell>
+									<CustomInput
+										className="w-12"
+										id={player.id}
+										manual={manual}
+										manualValue={formData.win}
+										value={player.win}
+										onChange={(value) =>
+											setFormData({ ...formData, win: value })
+										}
+									/>
+								</TableCell>
+								<TableCell>
+									<CustomInput
+										className="w-12"
+										id={player.id}
+										manual={manual}
+										manualValue={formData.draw}
+										value={player.draw}
+										onChange={(value) =>
+											setFormData({ ...formData, draw: value })
+										}
+									/>
+								</TableCell>
+								<TableCell>
+									<CustomInput
+										className="w-12"
+										id={player.id}
+										manual={manual}
+										manualValue={formData.lose}
+										value={player.lose}
+										onChange={(value) =>
+											setFormData({ ...formData, lose: value })
+										}
+									/>
+								</TableCell>
 								<TableCell>{player.matchDiff}</TableCell>
 								<TableCell>{player.point}</TableCell>
 								<TableCell className="flex gap-2">
@@ -143,15 +217,27 @@ function App() {
 									>
 										lose
 									</Button>
-									<Button
-										className="uppercase"
-										variant={"secondary"}
-										onClick={() =>
-											handleLose(player.id, player.lose, player.play)
-										}
-									>
-										manual
-									</Button>
+									{player.id !== manual ? (
+										<Button
+											className="uppercase"
+											variant={"secondary"}
+											onClick={() => handleManual(player.id)}
+										>
+											manual
+										</Button>
+									) : (
+										<div className="flex gap-2">
+											<Button
+												onClick={() => setManual(0)}
+												variant={"destructive"}
+											>
+												<CircleX />
+											</Button>
+											<Button onClick={handleSubmitManual}>
+												<Check />
+											</Button>
+										</div>
+									)}
 								</TableCell>
 							</TableRow>
 						))}

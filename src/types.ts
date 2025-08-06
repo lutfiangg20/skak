@@ -9,3 +9,10 @@ export type Player = {
 	matchDiff: number;
 	point: number;
 };
+
+export type EditPlayer = {
+	draw: number;
+	lose: number;
+	play: number;
+	win: number;
+};
